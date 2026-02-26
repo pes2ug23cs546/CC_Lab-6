@@ -1,0 +1,801 @@
+--- PAGE 1 ---
+ 
+ 
+Lab  06  -  Jenkins  and  Nginx  
+In  this  lab,  you  will  learn  how  modern  applications  are  deployed  using  automation,  
+containers,
+ 
+and
+ 
+load
+ 
+balancing.
+ 
+You  will  use  Jenkins  to  automate  the  deployment  of  multiple  backend  services  running  
+in
+ 
+Docker
+ 
+containers,
+ 
+and
+ 
+NGINX
+ 
+to
+ 
+distribute
+ 
+incoming
+ 
+traffic
+ 
+across
+ 
+these
+ 
+services
+ 
+using
+ 
+load
+ 
+balancing.
+ 
+This  lab  focuses  on  conceptual  understanding,  not  complex  application  development.  
+What  is  Load  Balancing?  
+Load  balancing  is  a  technique  used  to  distribute  incoming  network  traffic  across  
+multiple
+ 
+backend
+ 
+servers.
+ 
+This
+ 
+improves:
+ 
+●  Performance  
+ ●  Reliability  
+ ●  Fault  tolerance  
+ 
+In  this  lab,  NGINX  acts  as  a  load  balancer  and  forwards  requests  to  multiple  backend  
+containers.
+ 
+Overview  of  the  Lab:  
+You  will  perform  the  following  tasks:  
+1.  Set  up  Jenkins  using  Docker  
+ 2.  Create  a  backend  application  that  identifies  itself  
+ 3.  Dockerize  the  backend  application  
+ 4.  Configure  NGINX  for  load  balancing  
+ 5.  Use  Jenkins  to  deploy  multiple  backend  containers  
+ 6.  Verify  load  balancing  through  a  web  browser  
+Before  we  begin,  create  a  PUBLIC  github  repo  named  CC_Lab-6  
+ 
+
+--- PAGE 2 ---
+ 
+Task  1:  Set  Up  Jenkins  Using  Docker  
+Aim  
+To  run  Jenkins  as  a  Docker  container.  
+Deliverables  
+This  is  what  you  should  have  by  the  end  of  this  task.  
+Screenshot  of  Jenkins  dashboard  running  in  the  browser  (SS1)
+ 
+●  Use  the  code:   once  docker  is  installed  to  get  this  SS.  
+Steps  
+1.  Pull  the  Jenkins  image:  
+ 
+2.  Build  a  custom  jenkins  image,  use  the  file  Dockerfile.jenkins  provided  to  you   
+From  inside  the  folder  run:  
+docker  build  -t  jenkins-docker  -f  Dockerfile.jenkins  .   
+(This  will  take  a  while)  
+3.  Run  Jenkins  container:  
+
+
+--- PAGE 3 ---
+ 
+docker  run  -d  -p  8080:8080  -p  50000:50000  -v  jenkins_home:/var/jenkins_home  -v  
+/var/run/docker.sock:/var/run/docker.sock
+ 
+--name
+ 
+jenkins
+ 
+jenkins-docker
+ 
+This  will  start  Jenkins  using  the  custom  image  with  Docker  support  and  persistent  
+storage.
+ 
+The  Jenkins  container  is  run  with  a  Docker  volume  to  persist  all  Jenkins  data  across  
+restarts.
+ 
+3.  Next,  open  your  browser  and  navigate  to:  
+http://localhost:8080  
+ 
+4.  Retrieve  the  initial  admin  password:  
+docker  exec  jenkins  cat  /var/jenkins_home/secrets/initialAdminPassword  
+ 
+5.  Install  Suggested  Plugins  and  complete  the  Jenkins  setup.   
+When  prompted  for  plugin  installation,  click  on  “Select  Plugins  to  Install”  and  
+then
+ 
+search
+ 
+for
+ 
+GitHub
+ 
+and
+ 
+check
+ 
+the
+ 
+GitHub
+ 
+options.
+ 
+(This
+ 
+step
+ 
+may
+ 
+take
+ 
+a
+ 
+few
+ 
+minutes
+ 
+to
+ 
+complete)
+
+
+--- PAGE 4 ---
+ 
+  
+Sign  in  with  your  SRN ,  when  you  are  creating  the  first  admin  account,  otherwise  if  you  
+missed
+ 
+this
+ 
+step,
+ 
+go
+ 
+to
+ 
+Settings>Security>Security
+ 
+Realm>Allow
+ 
+Users
+ 
+to
+ 
+sign
+ 
+up.
+ 
+
+
+--- PAGE 5 ---
+ 
+Screenshot  2  This  would  be  your  Jenkins  dashboard  page  with  your  SRN .  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 6 ---
+ 
+Task-2:  Create  a  Jenkins  Job  to  Build  the  
+Backend
+ 
+Aim  
+To  configure  Jenkins  to  automatically  build  and  test  a  backend  application  from  a  
+GitHub
+ 
+repository.
+ 
+Deliverables  
+●  Screenshot  of  Jenkins  Console  Output(SS3)  
+●  Screenshot  of  Stable  build  in  Build  History (SS4)  
+Steps  
+1.  Extract  the  provided  ZIP  file  and  push  all  files  and  folders  to  your  GitHub  
+repository
+ 
+and
+ 
+name
+ 
+it
+ 
+as
+ 
+your
+ 
+SRN_Jenkins.
+ 2.  Use  the  following  commands  on  git  bash  
+
+
+--- PAGE 7 ---
+ 
+git  init  
+git  checkout  -b  main  
+git  remote  add  origin  <your-repository-url>  
+git  add  .  
+git  commit  -m  "Initial  Jenkins  lab  setup"  
+git  push  -u  origin  main  
+3.  Open  Jenkins  Dashboard  →  New  Item  
+Name  the  job:  
+ 
+<SRN>-backend-build
+ 
+4.  Select  Freestyle  Project  
+ 5.  Under  Source  Code  Management :  
+ ○  Select  Git  ○  Repository  URL:  <your  GitHub  repo>  ○  Branch:  */main  
+  
+6.  Under  Build  Triggers :  
+ ○  Select  Poll  SCM  
+
+
+--- PAGE 8 ---
+ 
+  
+Schedule :         H/5  *  *  *  *  
+7.  Under  Build :  
+ ○  Click  Execute  Shell  
+  
+PASTE  THIS  IN  THE  SHELL  
+cd  CC_LAB-6  
+docker  build  -t  backend-app  backend  
+8.  Click  Save  
+ 9.  Click  Build  Now  
+ 
+Take  Screenshots  3  and  4  showing  the  build  was  successful.  
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 9 ---
+ 
+Task-3:  Parameterized  Jenkins  Job  
+Aim  
+To  understand  how  Jenkins  jobs  can  be  parameterized  to  control  application  deployment  
+behavior.
+ 
+Steps  
+1.  Open  the  Jenkins  dashboard  and  select  the  job  created  in  Task-2.  
+ 2.  Click  Configure.  
+ 3.  Enable  the  option  This  project  is  parameterized.  
+ 4.  Add  a  Choice  Parameter  with  the  following  details:  
+Name:  Backend_Count  Under  choices,  add  1  and  2  one  after  the  other,  as  shown  in  the  below  screenshot.  
+ 
+5.  Scroll  down  to  the  Build  section  and  modify  the  Execute  Shell  command  as  
+shown
+ 
+below:
+ 
+cd  CC_LAB-6  
+docker  rm  -f  backend1  backend2  ||  true  
+if  [  "$BACKEND_COUNT"  =  "1"  ];  then  
+  docker  run  -d  --name  backend1  backend-app  
+else  
+
+
+--- PAGE 10 ---
+ 
+  docker  run  -d  --name  backend1  backend-app  
+  docker  run  -d  --name  backend2  backend-app  
+fi  
+ 
+6.  Click  Save .  
+ 7.  Click  Build  with  Parameters .  
+ 8.  Run  the  job  twice:  
+Once
+ 
+with
+ 
+BACKEND_COUNT
+ 
+=
+ 
+1
+ 
+Once  with  BACKEND_COUNT  =  2  
+Deliverables  
+●  Screenshot  of  Build  with  Parameters  page. (SS5)  
+
+
+--- PAGE 11 ---
+ 
+ 
+●  Screenshot  of  console  output  for  both  builds. (SS6)  
+  
+ 
+At  this  stage,  Jenkins  is  successfully  automating  the  build  and  deployment  of  the  
+backend
+ 
+application.
+ 
+Different  configurations  are  now  controlled  directly  from  Jenkins  without  changing  the  
+source
+ 
+code,
+ 
+demonstrating
+ 
+how
+ 
+CI
+ 
+systems
+ 
+manage
+ 
+and
+ 
+validate
+ 
+application
+ 
+behavior.
+ 
+ 
+ 
+ 
+
+
+--- PAGE 12 ---
+ 
+What  is  Jenkins  Pipeline?  
+ 
+In  simple  words,  Jenkins  Pipeline  is  a  combination  of  plugins  that  support  the  
+integration
+ 
+and
+ 
+implementation
+ 
+of
+ 
+continuous
+ 
+delivery
+ 
+pipelines
+ 
+using
+ 
+Jenkins.
+ 
+The
+ 
+pipeline
+ 
+as
+ 
+Code
+ 
+describes
+ 
+a
+ 
+set
+ 
+of
+ 
+features
+ 
+that
+ 
+allow
+ 
+Jenkins
+ 
+users
+ 
+to
+ 
+define
+ 
+pipelined
+ 
+job
+ 
+processes
+ 
+with
+ 
+code,
+ 
+stored
+ 
+and
+ 
+versioned
+ 
+in
+ 
+a
+ 
+source
+ 
+repository.
+ 
+ 
+Why  do  we  need  to  use  Jenkins  Pipeline?  
+-  Pipelines  are  better  than  freestyle  jobs,  you  can  write  a  lot  of  complex  
+tasks
+ 
+using
+ 
+pipelines
+ 
+when
+ 
+compared
+ 
+to
+ 
+Freestyle
+ 
+jobs.
+ -  You  can  see  how  long  each  stage  takes  to  execute  so  you  have  more  
+control
+ 
+compared
+ 
+to
+ 
+freestyle.
+ -  Pipeline  is  a  Groovy  based  script  that  has  a  set  of  plug-ins  integrated  
+for
+ 
+automating
+ 
+the
+ 
+builds,
+ 
+deployment
+ 
+and
+ 
+test
+ 
+execution.
+ -  Pipeline  defines  your  entire  build  process,  which  typically  includes  
+stages
+ 
+for
+ 
+building
+ 
+an
+ 
+application,
+ 
+testing
+ 
+it
+ 
+and
+ 
+then
+ 
+delivering
+ 
+it.
+ -  You  can  use  a  snippet  generator  to  generate  pipeline  code  for  the  stages  
+where
+ 
+you
+ 
+don't
+ 
+know
+ 
+how
+ 
+to
+ 
+write
+ 
+groovy
+ 
+code.
+ 
+ 
+ 
+ 
+
+
+--- PAGE 13 ---
+ 
+Task-4:  Jenkins  Pipeline  for  Automated  
+Deployment
+ 
+Aim  
+To  define  the  build  and  deployment  process  as  code  using  a  Jenkins  Pipeline  and  
+observe
+ 
+automated
+ 
+deployment
+ 
+behavior.
+ 
+Deliverables  
+●  Screenshot  of  Jenkins  Stage  View  
+  
+●  Screenshot  of  Console  Output  
+ 
+
+
+--- PAGE 14 ---
+ 
+ 
+●  Browser  screenshot  showing  backend  responses  (you  have  to  refresh  the  page  and  
+see
+ 
+another
+ 
+similar
+ 
+response
+ 
+-
+ 
+add
+ 
+both
+ 
+the
+ 
+screenshots)
+ 
+ 
+ 
+ 
+Procedure  
+S tep  1:  Create  a  Jenkins  Pipeline  Job  
+1.  Open  the  Jenkins  Dashboard .  
+ 2.  Click  New  Item .  
+ 
+Enter  the  job  name:  
+ 
+
+
+--- PAGE 15 ---
+ 
+ LAB6-PIPELINE-NGINX  
+3.  Select  Pipeline  and  click  OK .  
+ 
+Step  2:  Configure  Pipeline  from  SCM  
+1.  Scroll  to  the  Pipeline  section.  
+ 
+Set  Definition  to:  
+ 
+ 
+“Pipeline
+ 
+script
+ 
+from
+ 
+SCM”
+ 
+2.  Select  SCM  as  Git .  
+3.  Enter  your  GitHub  Repository  URL .  
+ 
+Set  Branch  Specifier  to:  
+ 
+ 
+*/main
+ 
+4.  Click  Save .  
+Note:  
+Give  the  exact  path  of  the  jenkins  file,  otherwise  the  build  will  fail!  
+Make  sure  the  paths  with  your  repo  match  in  the  Jenkins  file.   
+For  simplicity,  ensure  the  name  in  the  repo  is  CC_LAB-6.  
+
+
+--- PAGE 16 ---
+ 
+(In  my  case  it  would  be  CC_Lab-6)  
+Change  it  here  as  well  
+ 
+Step  3:  Run  the  Pipeline  
+1.  Click  Build  Now .  
+ 2.  Observe  the  pipeline  execution.  
+ 3.  Ensure  all  stages  complete  successfully  (green).  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+--- PAGE 17 ---
+ 
+Task  5:  Understanding  NGINX  Load  Balancing  
+Strategies
+ 
+Aim  
+To  study  how  NGINX  distributes  client  requests  using  different  load-balancing  
+strategies
+ 
+and
+ 
+observe
+ 
+their
+ 
+impact
+ 
+on
+ 
+backend
+ 
+selection.
+ 
+Deliverables  
+●  Screenshot  of  modified  nginx/default.conf  showing  different  load  balancing  
+methods
+ 
+ 
+Procedure  
+Step  1:  Understand  the  Current  Setup  
+Your  current  NGINX  configuration  uses  Round-Robin  load  balancing  by  default.  
+Open  the  file:  nginx/default.conf  
+You  should  see:  
+nginx  upstream  backend_servers  {      server  backend1:8080;      server  backend2:8080;  }   server  {      listen  80;       location  /  {          proxy_pass  http://backend_servers;      }  }  ```   Note:  Round-Robin  means  NGINX  sends  requests  alternately  to  each  backend  
+server
+ 
+in
+ 
+sequence.
+  Step  2:  Verify  Round-Robin  Behavior   1.  Open  your  browser  and  navigate  to:   http://localhost   
+
+--- PAGE 18 ---
+ 
+ 2.  Refresh  the  page  multiple  times  (at  least  5-6  times)   3.  Observe  the  responses  alternate  between:      Served  by  backend:  backend1     Served  by  backend:  backend2     Served  by  backend:  backend1     Served  by  backend:  backend2 
+Step  3:  Test  Least  Connections  Strategy  
+This  strategy  sends  new  requests  to  the  backend  with  the  fewest  active  connections.  
+1.  Modify  nginx/default.conf:  
+nginx  upstream  backend_servers  {      least_conn;      server  backend1:8080;      server  backend2:8080;  }   server  {      listen  80;       location  /  {          proxy_pass  http://backend_servers;      }  }  
+2.  Save  the  file  3.  Commit  and  push  changes  to  GitHub:  
+bash  git  add  nginx/default.conf  git  commit  -m  "Changed  to  least_conn  load  balancing"  git  push  origin  main  
+4.  Go  to  Jenkins  Dashboard  and  click  Build  Now  on  your  pipeline  5.  Wait  for  the  pipeline  to  complete  successfully  6.  Refresh  your  browser  at  http://localhost  multiple  times  7.  Take  a  screenshot  showing  the  backend  responses  
+Expected  Behavior:  Since  both  backends  handle  requests  equally  fast  in  this  simple  
+setup,
+ 
+you'll
+ 
+still
+ 
+see
+ 
+fairly
+ 
+even
+ 
+distribution,
+ 
+but
+ 
+NGINX
+ 
+is
+ 
+now
+ 
+tracking
+ 
+connection
+ 
+counts
+ 
+rather
+ 
+than
+ 
+just
+ 
+alternating.
+ 
+
+--- PAGE 19 ---
+ 
+In  case  ‘502  Bad  Gateway’  shows  up,  it’s  okay.  Add  the  screenshot.  
+Step  4:  Test  IP  Hash  Strategy  
+This  strategy  ensures  requests  from  the  same  client  IP  always  go  to  the  same  backend.  
+1.  Modify  nginx/default.conf :  
+nginx  upstream  backend_servers  {      ip_hash;      server  backend1:8080;      server  backend2:8080;  }   server  {      listen  80;       location  /  {          proxy_pass  http://backend_servers;      }  }  
+ 
+
+
+--- PAGE 20 ---
+ 
+2.  Save,  commit,  and  push :  
+bash  git  add  nginx/default.conf  git  commit  -m  "Changed  to  ip_hash  load  balancing"  git  push  origin  main  
+3.  Trigger  the  Jenkins  pipeline  again  4.  Wait  for  completion  5.  Refresh  your  browser  at  http://localhost  multiple  times  6.  Take  a  screenshot  showing  responses  
+Expected  Behavior:  All  requests  from  your  browser  should  consistently  go  to  the  same  
+backend
+ 
+(either
+ 
+backend1
+ 
+OR
+ 
+backend2,
+ 
+but
+ 
+not
+ 
+alternating).
+ 
+This
+ 
+is
+ 
+because
+ 
+your
+ 
+IP
+ 
+address
+ 
+is
+ 
+being
+ 
+used
+ 
+to
+ 
+determine
+ 
+routing.
+ 
+Troubleshooting  
+If  NGINX  shows  "502  Bad  Gateway":  
+●  Check  that  backend  containers  are  running:  docker  ps  ●  Check  backend  logs:  docker  logs  backend1  ●  Verify  backends  are  listening  on  port  8080  ●  Make  sure  all  containers  are  on  the  same  network  
+ 
+If  changes  don't  take  effect:  
+●  Make  sure  you  committed  and  pushed  to  GitHub  ●  Verify  Jenkins  pipeline  completed  successfully  ●  Check  NGINX  reloaded  config:  docker  logs  nginx-lb  
+In  case  502  still  shows  up,  add  a  screenshot  anyways.  We  just  want  to  see  that  
+you’ve
+ 
+learnt
+ 
+something
+ 
+:)
+ 
+  
+
+
+--- PAGE 21 ---
+ 
+   

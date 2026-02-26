@@ -1,0 +1,32 @@
+--- PAGE 1 ---
+Prerequisites  for  Lab  6   Before  performing  Lab–6:  Jenkins  CI/CD  with  Docker  &  NGINX,  students  must  ensure  
+the
+ 
+following
+ 
+software
+ 
+and
+ 
+configurations
+ 
+are
+ 
+available
+ 
+and
+ 
+working
+ 
+on
+ 
+their
+ 
+system.
+  Basic  System  Requirements:   ●  Windows  /  Linux  /  macOS  ●  Minimum  8  GB  RAM  recommended  ●  Stable  Internet  Connection   1.  Docker  Installation   Docker  must  be  installed  and  running  on  the  system.   docker  --version  docker  ps   Docker  daemon  should  be  running  without  errors.    2.  Git  Installation   Git  is  required  to  clone  and  pull  the  project  repository.   git  --version    3.  Jenkins  Setup   Jenkins  must  be  executed  inside  a  Docker  container  with  Docker  socket  access.   Command  to  Run  Jenkins   -  docker  pull  jenkins/jenkins:lts   -  docker  build  -t  jenkins-docker  -f  Dockerfile.jenkins  .     -  docker  run  -d  \  --name  jenkins  \  -p  8080:8080  \  -p  50000:50000  \  -v  jenkins_home:/var/jenkins_home  \  
+
+--- PAGE 2 ---
+-v  /var/run/docker.sock:/var/run/docker.sock  \  --user  root  \  jenkins/jenkins:lts    4.  Jenkins  Access   •  Open  browser  and  navigate  to:   http://localhost:8080    •  Retrieve  initial  admin  password  using:   docker  exec  jenkins  cat  /var/jenkins_home/secrets/initialAdminPassword    •  Complete  Jenkins  initial  setup.    5.  Required  Jenkins  Plugins   The  following  plugins  must  be  installed:   •  Git   •  Pipeline   •  Docker  Pipeline    6.  GitHub  Repository   •  Repository  must  be  public   •  Repository  must  contain  all  required  lab  files   •  Jenkinsfile  must  be  present  in  the  root  directory   7.  Required  Folder  Structure   The  repository  should  follow  the  structure  shown  below:   CC_LAB-6/  ├──  backend/  │    ├──  Dockerfile  │    └──  app.cpp  ├──  nginx/  │    └──  default.conf  ├──  Jenkinsfile   
+
+--- PAGE 3 ---
+    8.  Docker  Image  Availability   Ensure  the  following  images  can  be  pulled:   docker  pull  nginx  docker  pull  jenkins/jenkins:lts    9.  Final  Pre-Lab  Checklist   •  Docker  is  running   •  Jenkins  container  is  running   •  Jenkins  UI  accessible  on  port  8080   •  GitHub  repository  is  accessible   •  Jenkinsfile  is  syntactically  correct    Note:   Without  the  mentioned  prerequisites,  you  cannot  proceed  with  the  lab.     
